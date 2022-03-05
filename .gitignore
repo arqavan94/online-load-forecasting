@@ -1,0 +1,11 @@
+out
+__pycache__
+.vscode
+saved_models
+standlone
+standlone_models
+log
+venv
+*.csv
+
+

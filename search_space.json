@@ -1,0 +1,10 @@
+{
+    "optimizer":{"_type":"choice","_value":["Adam","RMSprop","Adamax"]},
+    "learning_rate":{"_type":"choice","_value":[0.0001, 0.001, 0.002, 0.005, 0.01]},
+    "activation":{"_type":"choice","_value":["relu","tanh"]},
+    "drop_out":{"_type":"choice","_value":[0.25,0.5]},
+    "lstm1_nodes":{"_type":"choice","_value":[128, 256,100]},
+    "lstm2_nodes" :{"_type":"choice","_value":[64,32,20]},
+    "batch_size" :{"_type":"choice","_value":[128,64]},
+    "epochs" :{"_type":"choice","_value":[100,50]}
+}
