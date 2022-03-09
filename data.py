@@ -2,9 +2,11 @@ from numpy import isnan
 import numpy as np
 import pandas as pd
 from numpy import nan
+import os
 from sklearn.preprocessing import MinMaxScaler
 
-split_dataset_value=0.65
+
+split_dataset_value=0.7
 
 def load_data(url):
  
@@ -41,6 +43,20 @@ def create_dataset(X, y, time_steps):
         ys.append(y.iloc[i + time_steps:i + time_steps+1])
     return np.array(Xs), np.array(ys)
 
+def data_transformer(train,test):
+
+  scaler = MinMaxScaler()
+  scaler = scaler.fit(train.to_numpy())
+  train = scaler.transform(train.to_numpy())
+  test = scaler.transform(test.to_numpy())
+  
+  # cnt_transformer = MinMaxScaler()
+  # cnt_transformer = cnt_transformer.fit(train[['Active_Power']])
+  # train['Active_Power'] = cnt_transformer.transform(train[['Active_Power']])
+  # test['Active_Power'] = cnt_transformer.transform(test[['Active_Power']])
+  return train,test, scaler
+
+# f_columns = ['temp']
 df=load_data('F:\online_project\clean_data_32100497.csv')
 fill_missing(df.values)
 dataset=to_daily_data(df)
@@ -48,17 +64,16 @@ dataset=to_daily_data(df)
 # online_data, dataset= dataset.iloc[(len(dataset)-online_size):], dataset.iloc[0:len(dataset)-online_size]
 train,test=split_test_train(dataset,split_dataset_value)
 
-def transformer_X(train,test,f_columns):
-  f_transformer = MinMaxScaler()
-  f_transformer = f_transformer.fit(train[f_columns].to_numpy())
-  train.loc[:, f_columns] = f_transformer.transform(train[f_columns].to_numpy())
-  test.loc[:, f_columns] = f_transformer.transform(test[f_columns].to_numpy())
-  
-  cnt_transformer = MinMaxScaler()
-  cnt_transformer = cnt_transformer.fit(train[['Active_Power']])
-  train['Active_Power'] = cnt_transformer.transform(train[['Active_Power']])
-  test['Active_Power'] = cnt_transformer.transform(test[['Active_Power']])
-  return train,test,cnt_transformer
+train,test, scaler = data_transformer(train,test)
 
-f_columns = ['temp']
-train,test,cnt_transformer= transformer_X(train,test,f_columns)
+X_train, y_train = create_dataset(train, train.Active_Power, 7)
+X_test, y_test = create_dataset(test, test.Active_Power, 7)
+
+
+# np.savez( os.path.join("F:\online_project\pre_trained_data", "train_file"), X_train )
+# np.savez( os.path.join("F:\online_project\pre_trained_data", "train_file"), y_train )
+# np.savez( os.path.join("F:\online_project\pre_trained_data", "test_file"), X_test )
+# np.savez( os.path.join("F:\online_project\pre_trained_data", "test_file"), y_test )
+# np.savez( os.path.join("F:\online_project\pre_trained_data", "validation_file"), X_val )
+# np.savez( os.path.join("F:\online_project\pre_trained_data", "validation_file"), y_val )
+

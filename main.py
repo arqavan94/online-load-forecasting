@@ -1,18 +1,22 @@
 
 import nni
 import logging
-from model import train_data
+from model import transfer_learning
 from evaluation import evaluate
+from data import X_train, y_train, X_test, y_test
 import numpy as np
 
 LOG = logging.getLogger('model')
 LOG.setLevel(logging.DEBUG)
 LOG.handlers=[logging.FileHandler('log')]
 LOG.debug("start")
-RMSE_list=[]
-MAE_list=[]
-MAPE_list=[]
-R2_list=[]
+RMSE_noTransfer_list=[]
+RMSE_withTransfer_list=[]
+MAE_noTrnasfer_list=[]
+MAE_withTransfer_list=[]
+MAPE_noTransfer_list=[]
+MAPE_withTransfer_list=[]
+
 
 def generate_default_params():
     '''
@@ -42,14 +46,35 @@ if __name__ == '__main__':
         PARAMS.update(RECEIVED_PARAMS)
         # train
         for i in range(10):
-            y_test,y_pred=train_data(PARAMS, 7)
-            RM,MA,MAP,R2=evaluate(y_test,y_pred)
-            RMSE_list.append(RM)
-            MAE_list.append(MA)
-            MAPE_list.append(MAP)
-            # R2_list.append(R2)
-            RMSE,MAPE,MAE= np.mean(RMSE_list),np.mean(MAPE_list),np.mean(MAE_list)
-            LOG.debug('Final result is: %.3f %.3f %.3f %.3f', RMSE,MAPE,MAE)
+            model_noTransfer, y_pred_noTransfer, model_withTransfer , y_pred_withTransfer,history_noTransfer, history_withTransfer = transfer_learning(X_train, y_train, X_test, y_test)
+            
+            RMSE_noTransfer, RMSE_withTransfer , MAE_noTransfer, MAE_withTransfer,MAPE_noTransfer,MAPE_withTransfer = evaluate(y_test,y_pred_noTransfer, y_pred_withTransfer)
+
+            RMSE_noTransfer_list.append(RMSE_noTransfer)
+            RMSE_withTransfer_list.append(RMSE_withTransfer)
+
+            MAE_noTrnasfer_list.append(MAE_noTransfer)
+            MAE_withTransfer_list.append(MAE_withTransfer)
+
+            MAPE_noTransfer_list.append(MAPE_noTransfer)
+            MAPE_withTransfer_list.append(MAPE_withTransfer)
+
+            
+            RMSE_noTransfer, RMSE_withTransfer , MAE_noTransfer, MAE_withTransfer,
+            MAPE_noTransfer,MAPE_withTransfer= np.mean(RMSE_noTransfer_list),np.mean(RMSE_withTransfer_list),np.mean(MAE_noTrnasfer_list),
+            np.mean(MAE_noTrnasfer_list),np.mean(MAE_withTransfer_list), np.mean(MAPE_noTransfer_list) ,np.mean(MAPE_withTransfer_list)
+            # LOG.debug('Final result is: %.3f %.3f %.3f %.3f', RMSE,MAPE,MAE)
+
+          
+            LOG.debug('\n')
+            LOG.debug('======== Results for no knowledge transfer =========')
+            LOG.debug('The RMSE, MAPE, MAE is {}{}{}'.format(round(np.sqrt(RMSE_noTransfer),4),round(np.sqrt(MAPE_noTransfer),4),round(np.sqrt(MAE_noTransfer),4)))
+            print('\n')
+            print('======== Results for knowledge transfer =========')
+            print('The RMSE, MAPE, MAE is {}{}{}'.format(round(np.sqrt(RMSE_withTransfer),4), round(np.sqrt(MAPE_withTransfer),4), round(np.sqrt(MAE_withTransfer),4)))
+        
+            # view_predictions(series,predictions_noTransfer,y_test,title='Without Transfer')
+            # view_predictions(series,predictions_withTransfer,y_test,title='With Transfer')
         # y_test,y_pred=train_data(PARAMS, 7)
         # RM,MA,MAP=evaluate(y_test,y_pred)
         # LOG.debug('Final result is: %.3f %.3f %.3f', RM,MA,MAP)

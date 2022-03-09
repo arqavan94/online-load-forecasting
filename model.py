@@ -1,7 +1,7 @@
 
+from ast import Not
 import logging
 from numpy import float64
-from data import train,test,create_dataset
 from tensorflow import keras
 import tensorflow as tf
 from keras import backend as K
@@ -27,7 +27,6 @@ STANDALONE_LOG_TAG="standlone"
 
 def create_model(hyper_params,X_train):
 
-    print("X_train:",X_train.shape)
     input_shape=(X_train.shape[1],X_train.shape[2])
     
     if hyper_params['optimizer'] == 'Adam':
@@ -81,15 +80,16 @@ class SendMetrics(keras.callbacks.Callback):
         '''
         LOG.debug(logs)
         nni.report_intermediate_result(logs['val_loss'])
-        
 
-def train_data(params,time_steps):
+    
+def train_data(params,X_train,y_train,X_test,y_test,trained_model):
 
-    X_train, y_train = create_dataset(train, train.Active_Power, time_steps)
-    X_test, y_test = create_dataset(test, test.Active_Power, time_steps)
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.3, random_state=None)
-
+    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.1, random_state=None)
     model = create_model(params,X_train)
+    
+    if trained_model is not None:
+
+        model.set_weights(weights=trained_model.get_weights())
 
     if nni.get_experiment_id() == "STANDALONE":
         log_path = STANDALONE_LOG_TAG
@@ -102,10 +102,19 @@ def train_data(params,time_steps):
 
     #ID=w47oC
 
-    model.fit(X_train, y_train, batch_size=params['batch_size'], epochs=params['epochs'], verbose=1,
+    history= model.fit(X_train, y_train, batch_size=params['batch_size'], epochs=params['epochs'], verbose=1,
         validation_data=(X_val,y_val), callbacks=[SendMetrics(), TensorBoard(log_dir=TENSORBOARD_DIR), keras.callbacks.EarlyStopping(patience=20, restore_best_weights=True)])
     
     y_pred= model.predict(X_test) 
     model.save(save_path)
 
-    return y_test,y_pred
+    return y_test,y_pred,history,model,save_path
+
+def transfer_learning(X_train, y_train, X_test, y_test):
+
+    # print('*** Fitting a model without knowledge transfer ***')
+    y_test, y_pred_noTransfer, history_noTransfer, model_noTransfer,model= train_data(X_train,y_train,X_test,y_test,trained_model=None)
+    # print('\n')
+    # print('*** Fitting a model with knowledge transfer ***')
+    y_test, y_pred_withTransfer, history_withTransfer, model_withTransfer= train_data(X_train,y_train,X_test,y_test,trained_model=model)
+    return model_noTransfer, y_pred_noTransfer, model_withTransfer , y_pred_withTransfer, history_noTransfer, history_withTransfer
