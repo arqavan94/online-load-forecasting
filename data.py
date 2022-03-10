@@ -45,16 +45,16 @@ def create_dataset(X, y, time_steps):
 
 def data_transformer(train,test):
 
-  scaler = MinMaxScaler()
-  scaler = scaler.fit(train.to_numpy())
-  train = scaler.transform(train.to_numpy())
-  test = scaler.transform(test.to_numpy())
+  # scaler = MinMaxScaler()
+  # scaler = scaler.fit(train.to_numpy())
+  # train['Active_Power'] = scaler.transform(train.to_numpy())
+  # test['Active_Power'] = scaler.transform(test.to_numpy())
   
-  # cnt_transformer = MinMaxScaler()
-  # cnt_transformer = cnt_transformer.fit(train[['Active_Power']])
-  # train['Active_Power'] = cnt_transformer.transform(train[['Active_Power']])
-  # test['Active_Power'] = cnt_transformer.transform(test[['Active_Power']])
-  return train,test, scaler
+  cnt_transformer = MinMaxScaler()
+  cnt_transformer = cnt_transformer.fit(train[['Active_Power']])
+  train['Active_Power'] = cnt_transformer.transform(train[['Active_Power']])
+  test['Active_Power'] = cnt_transformer.transform(test[['Active_Power']])
+  return train,test, cnt_transformer
 
 # f_columns = ['temp']
 df=load_data('F:\online_project\clean_data_32100497.csv')
@@ -65,7 +65,7 @@ dataset=to_daily_data(df)
 train,test=split_test_train(dataset,split_dataset_value)
 
 train,test, scaler = data_transformer(train,test)
-
+print("train",train['Active_Power'])
 X_train, y_train = create_dataset(train, train.Active_Power, 7)
 X_test, y_test = create_dataset(test, test.Active_Power, 7)
 
